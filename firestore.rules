@@ -2,7 +2,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -11,17 +10,15 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Rules for user profiles
+    // Rules for user profiles collection
     match /users/{userId} {
-      // Owner can always read their own full document
-      // Public visitors can only read if the user explicitly enabled publicProfile
-      allow read: if isOwner(userId) || (resource.data.publicProfileEnabled == true);
+      // 1. Authenticated owner can always read their own profile
+      // 2. Public visitors can read only if publicProfileEnabled is true
+      allow read: if isOwner(userId) || (resource != null && resource.data.publicProfileEnabled == true);
 
-      // Only the authenticated account owner can create or update their profile
-      allow create: if isOwner(userId) && request.resource.data.uid == userId;
-      allow update: if isOwner(userId) && request.resource.data.uid == userId;
-
-      // Delete only by owner
+      // Only the authenticated user matching this userId can create, update, or delete
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
       allow delete: if isOwner(userId);
     }
   }
