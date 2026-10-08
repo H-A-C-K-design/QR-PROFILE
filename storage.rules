@@ -1,0 +1,30 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidImage() {
+      return request.resource.contentType.matches('image/(jpeg|png|webp|jpg)')
+        && request.resource.size < 5 * 1024 * 1024; // 5MB limit
+    }
+
+    // Profile photos directory
+    match /profile_photos/{userId}/{fileName} {
+      // Public can view avatar images if shared on profile
+      allow read: if true;
+
+      // Only the authenticated account owner can upload/overwrite their own avatars
+      allow write: if isOwner(userId) && isValidImage();
+
+      // Only owner can delete
+      allow delete: if isOwner(userId);
+    }
+  }
+}

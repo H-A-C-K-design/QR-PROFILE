@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Rules for user profiles
+    match /users/{userId} {
+      // Owner can always read their own full document
+      // Public visitors can only read if the user explicitly enabled publicProfile
+      allow read: if isOwner(userId) || (resource.data.publicProfileEnabled == true);
+
+      // Only the authenticated account owner can create or update their profile
+      allow create: if isOwner(userId) && request.resource.data.uid == userId;
+      allow update: if isOwner(userId) && request.resource.data.uid == userId;
+
+      // Delete only by owner
+      allow delete: if isOwner(userId);
+    }
+  }
+}
