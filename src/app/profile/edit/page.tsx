@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
@@ -504,7 +504,15 @@ function ProfileEditContent() {
 export default function ProfileEditPage() {
   return (
     <ProtectedRoute>
-      <ProfileEditContent />
+      <Suspense
+        fallback={
+          <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh]">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          </div>
+        }
+      >
+        <ProfileEditContent />
+      </Suspense>
     </ProtectedRoute>
   );
 }
