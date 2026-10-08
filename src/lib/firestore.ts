@@ -105,10 +105,29 @@ export async function updateUserProfile(
   }
 
   const userRef = doc(db, USERS_COLLECTION, uid);
-  await updateDoc(userRef, {
-    ...updates,
-    updatedAt: new Date().toISOString(),
-  });
+  const savePromise = setDoc(
+    userRef,
+    {
+      ...updates,
+      uid,
+      updatedAt: new Date().toISOString(),
+    },
+    { merge: true }
+  );
+
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(
+      () =>
+        reject(
+          new Error(
+            "Firestore request timed out. Please check your internet connection or verify Firestore security rules in Firebase Console."
+          )
+        ),
+      10000
+    )
+  );
+
+  await Promise.race([savePromise, timeoutPromise]);
 }
 
 /**

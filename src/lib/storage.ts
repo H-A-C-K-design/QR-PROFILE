@@ -68,6 +68,17 @@ export async function uploadProfilePhoto(
       },
     });
 
+    const timer = setTimeout(() => {
+      try {
+        uploadTask.cancel();
+      } catch {}
+      reject(
+        new Error(
+          "Photo upload timed out. Please verify that Firebase Storage is enabled in Firebase Console."
+        )
+      );
+    }, 20000);
+
     uploadTask.on(
       "state_changed",
       (snapshot) => {
@@ -77,10 +88,18 @@ export async function uploadProfilePhoto(
         }
       },
       (error) => {
+        clearTimeout(timer);
         console.error("Storage upload error:", error);
-        reject(error);
+        reject(
+          new Error(
+            error.code === "storage/unauthorized"
+              ? "Permission denied. Please publish storage.rules in Firebase Console."
+              : `Upload failed: ${error.message}`
+          )
+        );
       },
       async () => {
+        clearTimeout(timer);
         try {
           const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
           resolve(downloadUrl);

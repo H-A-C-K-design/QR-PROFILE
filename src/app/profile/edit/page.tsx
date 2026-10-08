@@ -108,7 +108,10 @@ function ProfileEditContent() {
   // Handle Save
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user) {
+      setErrorMsg("You must be signed in to save your profile.");
+      return;
+    }
 
     setErrorMsg(null);
     setSuccessMsg(null);
